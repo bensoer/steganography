@@ -56,16 +56,23 @@ if mode == "stego":
             with open(outputFileDir, 'wb') as o:
 
                 logger.info("Parsing Header Content From Carrier")
+                logger.info(bitsNeededToRepresent)
+
                 # move to end point of the header
-                c.seek(bitsNeededToRepresent, 0)
+                c.seek(bitsNeededToRepresent-1, 0)
+                logger.info(c.tell())
+
                 headerBytes = list()
 
                 # pull out carrier bytes and adjust carrier LSB to equal to dataFileBytesSize LSB
                 # print it in backwards so that padded 0's will do nothing and fill in the extra space
-                count = 1
-                while c.tell() > 0:
-                    c.seek(count, 1)
+
+                while c.tell() > 0 :
+                    print(c.tell())
                     hbyte = c.read(1)
+                    c.seek(-2, 1)
+                    print(c.tell())
+
                     intByte = hbyte[0]
 
                     lsb = (dataFileByteSize & 1)
@@ -76,6 +83,7 @@ if mode == "stego":
 
                     hbyte = bytes(intByte)
 
+                    print("inserting")
                     headerBytes.insert(0, hbyte)
                     dataFileByteSize >>= 1
 
@@ -89,11 +97,13 @@ if mode == "stego":
                 while dByte:
                     for dBit in dByte:
                         cByte = c.read(1)
+                        intByte = cByte[0]
                         if dBit == 1:
-                            cByte |= 1
+                            intByte |= 1
                         else:
-                            cByte &= ~1
+                            intByte &= ~1
 
+                        cByte = bytes(intByte)
                         o.write(cByte)
                     dByte = d.read(1)
 
